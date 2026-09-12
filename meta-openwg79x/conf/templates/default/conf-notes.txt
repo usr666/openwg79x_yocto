@@ -1,0 +1,15 @@
+Targets for this project:
+    openwg79x-image          rootfs only (.ext4), for updating a running device
+    openwg79x-image-sdcard   complete dual-root SD card image (.wic.bz2)
+
+Build with:
+    bitbake openwg79x-image
+
+Flash a blank card from tmp/deploy/images/raspberrypi0-2w-64/, e.g.:
+    bzcat openwg79x-image-sdcard-raspberrypi0-2w-64.rootfs.wic.bz2 | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
+
+Update a running device (from the repo root, target is never hardcoded):
+    ./scripts/deploy-test.sh <user@host>    write the idle slot, boot it once
+    ./scripts/promote.sh     <user@host>    keep the slot that is running
+
+See dual-root-tryboot-howto.md for how the A/B scheme works.

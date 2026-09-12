@@ -1,0 +1,30 @@
+# short-description: openwg79x dual-root SD card image
+# long-description: SD card image for the Raspberry Pi Zero 2 W with two
+# interchangeable rootfs slots and a persistent data partition. The single
+# vfat boot partition holds the firmware, config.txt (committed slot),
+# tryboot.txt (candidate slot) and one subdirectory per slot holding that
+# slot's kernel, device tree, overlays and cmdline.txt.
+#
+#   p1  boot    vfat   ~128 MiB
+#   p2  root_p2 ext4    512 MiB   <- config.txt / os_prefix=p2/ boots this
+#   p3  root_p3 ext4    512 MiB   <- tryboot.txt / os_prefix=p3/ boots this
+#   p4  data    ext4    128 MiB
+#
+# Both slots are populated with the same rootfs, so a freshly flashed card can
+# tryboot into either one. The Zero 2 W boot ROM requires an MBR table, which
+# is why this is exactly four primary partitions with no room for a fifth.
+#
+# Sizes are fixed: the two rootfs partitions must stay identical in size, since
+# an image is written to whichever slot is idle. Changing the layout is not an
+# in-place upgrade, it requires re-flashing the card.
+
+bootloader --ptable msdos
+
+# No mountpoints except "/": wic appends an /etc/fstab line for every partition
+# that has one, but only to the rootfs it packs into the .wic. That would make a
+# freshly flashed card differ from one updated with the standalone .ext4, so
+# /etc/fstab is owned by the base-files bbappend instead.
+part --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4096 --fixed-size 128
+part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label root_p2 --align 4096 --fixed-size 512
+part --source rootfs --ondisk mmcblk0 --fstype=ext4 --label root_p3 --align 4096 --fixed-size 512
+part --ondisk mmcblk0 --fstype=ext4 --label data --align 4096 --fixed-size 128

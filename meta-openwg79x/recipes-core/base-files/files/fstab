@@ -1,0 +1,16 @@
+# openwg79x dual-root layout. The rootfs is read-only (the /dev/root line is
+# rewritten to "ro" by read_only_rootfs_hook at image time), so everything that
+# has to survive a reboot lives on /data, which no slot update writes to.
+#
+# The boot partition is deliberately not mounted here: nothing needs it once the
+# kernel is loaded, and the update scripts mount it read-write only for as long
+# as it takes to swap a slot's boot files.
+
+/dev/root            /                    auto       defaults              1  1
+proc                 /proc                proc       defaults              0  0
+devpts               /dev/pts             devpts     mode=0620,ptmxmode=0666,gid=5      0  0
+tmpfs                /run                 tmpfs      mode=0755,nodev,nosuid,strictatime 0  0
+tmpfs                /var/volatile        tmpfs      defaults              0  0
+
+# sync: this device can lose power at any moment
+/dev/mmcblk0p4       /data                ext4       defaults,sync         0  2

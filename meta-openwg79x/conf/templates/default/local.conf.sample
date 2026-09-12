@@ -1,0 +1,65 @@
+#
+# local.conf.sample for openwg79x_yocto — Raspberry Pi Zero 2 W image
+#
+
+MACHINE ?= "raspberrypi0-2w-64"
+DISTRO ?= "poky"
+
+# Package format
+PACKAGE_CLASSES ?= "package_ipk"
+
+# SDK/ADT target architecture
+SDKMACHINE ?= "x86_64"
+
+# Serial port left free for the GPS rather than used as a console. This drops
+# enable_uart=0 into config.txt and keeps console=serial0 out of the kernel
+# cmdline; SERIAL_CONSOLES clears the getty the machine config would otherwise
+# respawn on ttyS0. The cost is that a test boot which never comes back can no
+# longer be watched on the console, only inferred from whether it reappears.
+ENABLE_UART = "0"
+SERIAL_CONSOLES = ""
+
+# The firmware builds the device tree filename it wants from the board revision
+# as "bcm<n>-rpi-<name>.dtb", and its name table contains both "zero-2" and
+# "zero-2-w". meta-raspberrypi only builds bcm2710-rpi-zero-2.dtb, so on firmware
+# that asks for the -w name the card would simply not boot. The two are the same
+# content upstream (bcm2710-rpi-zero-2.dts is a one line #include of the -w file),
+# so build both names and let the firmware pick.
+RPI_KERNEL_DEVICETREE:append = " broadcom/bcm2710-rpi-zero-2-w.dtb"
+
+# The Zero 2 W's onboard WiFi/Bluetooth firmware (linux-firmware-rpidistro) ships
+# blobs under a Synaptics license with a clause that could theoretically act as a
+# killswitch, so meta-raspberrypi refuses to build it unless the risk is
+# acknowledged here. Without this the image has no WiFi at all, which for this
+# board also means no way to run the update scripts. See
+# sources/meta-raspberrypi/docs/ipcompliance.md.
+LICENSE_FLAGS_ACCEPTED = "synaptics-killswitch"
+
+# Extra image features. debug-tweaks allows a passwordless root login on the
+# serial console; drop it for anything that leaves the bench.
+# EXTRA_IMAGE_FEATURES ?= "debug-tweaks"
+
+# Keep downloads and shared state outside of individual build dirs so
+# repeated builds/clones can reuse them.
+DL_DIR ?= "${TOPDIR}/../downloads"
+SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
+
+# Delete each recipe's work directory once it is built. Trades rebuild time for
+# a much smaller build/ directory; drop it if you need to poke around in
+# tmp/work while debugging a recipe.
+INHERIT += "rm_work"
+
+PATCHRESOLVE = "noop"
+
+# Disk space monitoring
+BB_DISKMON_DIRS ??= "\
+    STOPTASKS,${TMPDIR},1G,100K \
+    STOPTASKS,${DL_DIR},1G,100K \
+    STOPTASKS,${SSTATE_DIR},1G,100K \
+    STOPTASKS,/tmp,100M,100K \
+    HALT,${TMPDIR},100M,1K \
+    HALT,${DL_DIR},100M,1K \
+    HALT,${SSTATE_DIR},100M,1K \
+    HALT,/tmp,10M,1K"
+
+CONF_VERSION = "2"

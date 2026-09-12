@@ -1,0 +1,5 @@
+/build/
+/downloads/
+/sstate-cache/
+*.pyc
+__pycache__/
