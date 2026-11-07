@@ -1,0 +1,1 @@
+openwg ALL=(root) NOPASSWD: /etc/init.d/gpsd

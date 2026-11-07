@@ -26,6 +26,6 @@ bootloader --ptable msdos
 # freshly flashed card differ from one updated with the standalone .ext4, so
 # /etc/fstab is owned by the base-files bbappend instead.
 part --source bootimg-partition --ondisk mmcblk0 --fstype=vfat --label boot --active --align 4096 --fixed-size 128
-part / --source rootfs --ondisk mmcblk0 --fstype=ext4 --label root_p2 --align 4096 --fixed-size 512
-part --source rootfs --ondisk mmcblk0 --fstype=ext4 --label root_p3 --align 4096 --fixed-size 512
-part --ondisk mmcblk0 --fstype=ext4 --label data --align 4096 --fixed-size 128
+part / --source rootfs --exclude-path data/ --ondisk mmcblk0 --fstype=ext4 --label root_p2 --align 4096 --fixed-size 512
+part --source rootfs --exclude-path data/ --ondisk mmcblk0 --fstype=ext4 --label root_p3 --align 4096 --fixed-size 512
+part --source rootfs --change-directory=data --ondisk mmcblk0 --fstype=ext4 --label data --align 4096 --fixed-size 128

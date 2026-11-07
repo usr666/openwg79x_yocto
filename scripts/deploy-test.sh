@@ -17,6 +17,8 @@ case $running_slot in
         ;;
 esac
 
+ssh -n "$target" "fw_setenv boot_slot $running_slot"
+
 echo "writing slot $idle_slot on $target"
 
 dd if="$rootfs" bs=1M status=progress | ssh "$target" "

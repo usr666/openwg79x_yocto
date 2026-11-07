@@ -50,6 +50,7 @@ SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
 # a much smaller build/ directory; drop it if you need to poke around in
 # tmp/work while debugging a recipe.
 INHERIT += "rm_work"
+INHERIT:remove = "create-spdx"
 
 PATCHRESOLVE = "noop"
 
