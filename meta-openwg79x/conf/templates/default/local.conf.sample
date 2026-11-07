@@ -6,6 +6,7 @@ MACHINE ?= "raspberrypi0-2w-64"
 DISTRO ?= "poky"
 
 RPI_USE_U_BOOT = "1"
+DISTRO_FEATURES:remove = "zeroconf"
 
 # Package format
 PACKAGE_CLASSES ?= "package_ipk"

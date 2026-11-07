@@ -26,4 +26,6 @@ openwg79x_files_to_data() {
     install -d ${IMAGE_ROOTFS}/data/etc/default
     mv ${IMAGE_ROOTFS}${sysconfdir}/default/gpsd.default ${IMAGE_ROOTFS}/data/etc/default/gpsd
     ln -sf /data/etc/default/gpsd ${IMAGE_ROOTFS}${sysconfdir}/default/gpsd
+
+    sed -i "s|^DROPBEAR_RSAKEY_DIR=.*|DROPBEAR_RSAKEY_DIR=/data/etc/dropbear|" ${IMAGE_ROOTFS}${sysconfdir}/default/dropbear
 }
