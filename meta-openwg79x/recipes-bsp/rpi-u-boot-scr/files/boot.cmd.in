@@ -1,0 +1,9 @@
+if test -z "${devnum}"; then setenv devnum 0; fi
+if test -z "${boot_slot}"; then setenv boot_slot p2; fi
+setenv slot ${boot_slot}
+if test -n "${try_slot}"; then setenv slot ${try_slot}; setenv try_slot; saveenv; fi
+if test "${slot}" = "p3"; then setenv slot_part 3; else setenv slot_part 2; fi
+
+# Not scriptaddr: it may hold this script.
+load mmc ${devnum}:${slot_part} ${pxefile_addr_r} /boot/boot.scr && source ${pxefile_addr_r}
+reset

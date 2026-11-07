@@ -5,6 +5,8 @@
 MACHINE ?= "raspberrypi0-2w-64"
 DISTRO ?= "poky"
 
+RPI_USE_U_BOOT = "1"
+
 # Package format
 PACKAGE_CLASSES ?= "package_ipk"
 

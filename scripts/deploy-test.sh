@@ -19,26 +19,12 @@ esac
 
 echo "writing slot $idle_slot on $target"
 
-dd if="$deploy_dir/openwg79x-bootslot-$idle_slot.tar.gz" bs=1M status=progress | ssh "$target" "
-    set -e
-    mount /dev/mmcblk0p1 /mnt
-    rm -rf /mnt/$idle_slot
-    gzip -dc | tar -C /mnt -xf -
-    umount /mnt
-"
-
 dd if="$rootfs" bs=1M status=progress | ssh "$target" "
     set -e
     gzip -dc | dd of=/dev/mmcblk0$idle_slot bs=4M
     sync
 "
 
-ssh -n "$target" "
-    set -e
-    mount /dev/mmcblk0p1 /mnt
-    cp /mnt/slot-$idle_slot.txt /mnt/tryboot.txt
-    umount /mnt
-    tryboot-reboot '0 tryboot'
-" || true
+ssh -n "$target" "fw_setenv try_slot $idle_slot && reboot" || true
 
-echo "booting slot $idle_slot once; promote.sh keeps it, power cycle rolls back"
+echo "booting slot $idle_slot once; promote.sh keeps it, a reset rolls back"

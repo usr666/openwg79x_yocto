@@ -1,22 +1,23 @@
 # short-description: openwg79x dual-root SD card image
 # long-description: SD card image for the Raspberry Pi Zero 2 W with two
-# interchangeable rootfs slots and a persistent data partition. The single
-# vfat boot partition holds the firmware, config.txt (committed slot),
-# tryboot.txt (candidate slot) and one subdirectory per slot holding that
-# slot's kernel, device tree, overlays and cmdline.txt.
+# interchangeable rootfs slots and a persistent data partition. The vfat boot
+# partition holds the firmware, config.txt, U-Boot and the slot selector
+# boot.scr; each slot carries its own kernel, device tree and overlays in /boot.
 #
-#   p1  boot    vfat   ~128 MiB
-#   p2  root_p2 ext4    512 MiB   <- config.txt / os_prefix=p2/ boots this
-#   p3  root_p3 ext4    512 MiB   <- tryboot.txt / os_prefix=p3/ boots this
+#   gap         U-Boot environment at 1 MiB and 1.125 MiB (before p1)
+#   p1  boot    vfat    128 MiB
+#   p2  root_p2 ext4    512 MiB
+#   p3  root_p3 ext4    512 MiB
 #   p4  data    ext4    128 MiB
 #
 # Both slots are populated with the same rootfs, so a freshly flashed card can
-# tryboot into either one. The Zero 2 W boot ROM requires an MBR table, which
-# is why this is exactly four primary partitions with no room for a fifth.
+# boot either one. The Zero 2 W boot ROM requires an MBR table, which is why
+# this is exactly four primary partitions with no room for a fifth.
 #
 # Sizes are fixed: the two rootfs partitions must stay identical in size, since
 # an image is written to whichever slot is idle. Changing the layout is not an
-# in-place upgrade, it requires re-flashing the card.
+# in-place upgrade, it requires re-flashing the card. The 4 MiB alignment of p1
+# is what leaves room for the U-Boot environment.
 
 bootloader --ptable msdos
 

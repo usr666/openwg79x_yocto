@@ -11,11 +11,6 @@ if [ "$running_slot" != p2 ] && [ "$running_slot" != p3 ]; then
     exit 1
 fi
 
-ssh -n "$target" "
-    set -e
-    mount /dev/mmcblk0p1 /mnt
-    cp /mnt/slot-$running_slot.txt /mnt/config.txt
-    umount /mnt
-"
+ssh -n "$target" "fw_setenv boot_slot $running_slot"
 
 echo "$target now boots slot $running_slot"
