@@ -8,7 +8,20 @@ inherit core-image
 # or on volatile storage.
 IMAGE_FEATURES += "read-only-rootfs ssh-server-dropbear allow-root-login"
 
-IMAGE_INSTALL:append = " kernel-modules kernel-image kernel-devicetree openwg79x-slotboot libubootenv-bin u-boot-env wpa-supplicant openwg79x-data gpsd gps-utils lighttpd"
+IMAGE_INSTALL:append = " \
+    kernel-modules \
+    kernel-image \
+    kernel-devicetree \
+    openwg79x-slotboot \
+    libubootenv-bin \
+    u-boot-env \
+    wpa-supplicant \
+    openwg79x-data \
+    gpsd \
+    gps-utils \
+    openwg79x-rc \
+    openocd \
+    "
 
 # gps-utils recommends gps-utils-python, which drags the whole python3 runtime in
 # for xgps/ubxtool/zerk. gpspipe and the other C tools do not need it.

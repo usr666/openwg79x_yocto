@@ -1,0 +1,35 @@
+#!/bin/sh
+
+D=/data/openwg79x_rc
+L=/var/log/openwg79x_rc
+C=/data/etc/lighttpd
+
+case "$1" in
+start)
+	mkdir -p $D/workorder $D/layers $L $C
+	chown openwg:openwg $L
+	ln -sfn $D/workorder $L/workorder
+	if [ ! -f $C/server.key ]; then
+		openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -subj /CN=openwg79x -keyout $C/server.key -out $C/server.crt 2>/dev/null
+	fi
+	start-stop-daemon -S -b -m -p /var/run/openwg79x-rc.pid -c openwg -x /bin/sh -- -c "cd $L && while true; do /usr/bin/openwg79x_rc; sleep 5; done"
+	if [ -x $D/sync.sh ]; then
+		start-stop-daemon -S -b -m -p /var/run/openwg79x-sync.pid -c openwg -x $D/sync.sh
+	fi
+	;;
+stop)
+	start-stop-daemon -K -p /var/run/openwg79x-rc.pid
+	killall openwg79x_rc 2>/dev/null
+	start-stop-daemon -K -p /var/run/openwg79x-sync.pid 2>/dev/null
+	rm -f /var/run/openwg79x-rc.pid /var/run/openwg79x-sync.pid
+	;;
+restart)
+	$0 stop
+	sleep 1
+	$0 start
+	;;
+*)
+	echo "usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac
