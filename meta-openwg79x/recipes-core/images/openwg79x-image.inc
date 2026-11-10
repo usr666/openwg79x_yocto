@@ -21,6 +21,8 @@ IMAGE_INSTALL:append = " \
     gps-utils \
     openwg79x-rc \
     openocd \
+    chrony \
+    chronyc \
     "
 
 # gps-utils recommends gps-utils-python, which drags the whole python3 runtime in

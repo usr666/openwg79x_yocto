@@ -12,7 +12,7 @@ start)
 	if [ ! -f $C/server.key ]; then
 		openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -subj /CN=openwg79x -keyout $C/server.key -out $C/server.crt 2>/dev/null
 	fi
-	start-stop-daemon -S -b -m -p /var/run/openwg79x-rc.pid -c openwg -x /bin/sh -- -c "cd $L && while true; do /usr/bin/openwg79x_rc; sleep 5; done"
+	start-stop-daemon -S -b -m -p /var/run/openwg79x-rc.pid -c openwg -x /bin/sh -- -c "cd $L && while true; do /usr/bin/openwg79x_rc 2>&1 | logger -t openwg79x_rc; sleep 5; done"
 	if [ -x $D/sync.sh ]; then
 		start-stop-daemon -S -b -m -p /var/run/openwg79x-sync.pid -c openwg -x $D/sync.sh
 	fi

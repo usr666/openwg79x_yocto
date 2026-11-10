@@ -1,0 +1,112 @@
+gpsd: retry NTRIP sources and follow NTRIP socket changes
+
+Command line ntrip:// sources are checked every 120 s and re-added when not
+delivering data. Outage start and end are logged at ERROR level.
+
+The main loop did not move select() to the new socket NTRIP opens after the
+source table probe, so data was never read unless the new socket got the
+same fd number as the probe socket.
+
+Upstream-Status: Inappropriate [local]
+
+--- a/gpsd/gpsd.c	2026-11-10 18:53:40.088032517 +0000
++++ b/gpsd/gpsd.c	2026-11-10 19:16:01.345516711 +0000
+@@ -849,6 +849,55 @@
+     return ret;
+ }
+ 
++#define NTRIP_MAX 4
++#define NTRIP_RETRY_S 120
++static char ntrip_urls[NTRIP_MAX][GPS_PATH_MAX];
++static int ntrip_count;
++
++// re-add command line NTRIP sources that have stopped delivering data
++static void ntrip_retry(void)
++{
++    static time_t last_check;
++    static unsigned long last_count[NTRIP_MAX];
++    static bool down[NTRIP_MAX];
++    struct timespec ts;
++    time_t now;
++    int i;
++
++    (void)clock_gettime(CLOCK_MONOTONIC, &ts);
++    now = ts.tv_sec;
++    if (0 == last_check) {
++        last_check = now;
++    }
++    if (NTRIP_RETRY_S > now - last_check) {
++        return;
++    }
++    last_check = now;
++    for (i = 0; i < ntrip_count; i++) {
++        struct gps_device_t *devp = find_device(ntrip_urls[i]);
++        bool works = NULL != devp && 0 < devp->gpsdata.gps_fd && NTRIP_CONN_ESTABLISHED == devp->ntrip.conn_state && devp->lexer.char_counter != last_count[i];
++
++        if (works) {
++            last_count[i] = devp->lexer.char_counter;
++            if (down[i]) {
++                GPSD_LOG(LOG_ERROR, &context.errout, "NTRIP: %s working again\n", ntrip_urls[i]);
++                down[i] = false;
++            }
++            continue;
++        }
++        if (!down[i]) {
++            GPSD_LOG(LOG_ERROR, &context.errout, "NTRIP: %s not working, retrying every %d s\n", ntrip_urls[i], NTRIP_RETRY_S);
++            down[i] = true;
++        }
++        if (NULL != devp) {
++            deactivate_device(devp);
++            free_device(devp);
++        }
++        last_count[i] = 0;
++        (void)gpsd_add_device(ntrip_urls[i], true);
++    }
++}
++
+ #if defined(SOCKET_EXPORT_ENABLE) || defined(CONTROL_SOCKET_ENABLE)
+ /* convert hex, with length len, to binary, write it, unchanged, to GPS
+  * Returns: NULL, or pointer to error string
+@@ -2489,6 +2538,9 @@
+      */
+     in_restart = false;
+     for (i = optind; i < argc; i++) {
++      if (0 == strncmp(argv[i], "ntrip://", 8) && NTRIP_MAX > ntrip_count) {
++          (void)strlcpy(ntrip_urls[ntrip_count++], argv[i], GPS_PATH_MAX);
++      }
+       if (gpsd_add_device(argv[i], nowait)) {
+             device_opened = true;
+         } else {
+@@ -2802,12 +2854,14 @@
+         GPSD_LOG(LOG_RAW1, &context.errout, "poll active devices\n");
+         for (device = devices; device < devices + MAX_DEVICES; device++) {
+             int multipoll_ret;
++            int oldfd;
+ 
+             if (!allocated_device(device) ||
+                 0 >= device->gpsdata.gps_fd) {
+                 continue;
+             }
+ 
++            oldfd = device->gpsdata.gps_fd;
+             multipoll_ret = gpsd_multipoll(FD_ISSET(device->gpsdata.gps_fd,
+                                            &rfds), device, all_reports,
+                                            DEVICE_REAWAKE);
+@@ -2879,7 +2933,17 @@
+                          device->gpsdata.gps_fd, multipoll_ret);
+                 break;
+             }
++            // NTRIP replaces its socket while connecting, move select() to the new one
++            if (oldfd != device->gpsdata.gps_fd) {
++                FD_CLR(oldfd, &all_fds);
++                adjust_max_fd(oldfd, false);
++                if (0 < device->gpsdata.gps_fd) {
++                    FD_SET(device->gpsdata.gps_fd, &all_fds);
++                    adjust_max_fd(device->gpsdata.gps_fd, true);
++                }
++            }
+         }
++        ntrip_retry();
+ 
+ #ifdef __UNUSED_AUTOCONNECT__
+         if (0 < context.fixcnt &&

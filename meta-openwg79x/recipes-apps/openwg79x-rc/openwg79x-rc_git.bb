@@ -5,9 +5,11 @@ SRC_URI = "git://github.com/usr666/OpenWG79x_linux.git;protocol=https;branch=mas
            file://openwg79x-rc.init \
            file://sync.sh \
            "
-SRCREV = "${AUTOREV}"
+SRCREV = "316eb234a0c521f76bcd638972f6ca949e6be4da"
 PV = "1.0+git"
 S = "${WORKDIR}/git"
+
+DEPENDS = "openwg79x-data"
 
 inherit update-rc.d
 
@@ -23,7 +25,7 @@ do_install() {
     install -D -m 0755 ${WORKDIR}/openwg79x-rc.init ${D}${sysconfdir}/init.d/openwg79x-rc
     install -d ${D}${datadir}/openwg79x-rc/www
     install -m 0644 ${S}/web/mowermap.html ${S}/web/woeditor.html ${D}${datadir}/openwg79x-rc/www/
-    install -d ${D}/data/openwg79x_rc/workorder ${D}/data/openwg79x_rc/layers
+    install -d -o openwg -g openwg ${D}/data/openwg79x_rc/workorder ${D}/data/openwg79x_rc/layers
     install -m 0644 ${WORKDIR}/sync.sh ${D}/data/openwg79x_rc/sync.sh
 }
 
